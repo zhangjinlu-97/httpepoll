@@ -10,9 +10,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <arpa/inet.h>
 #include "threadpool.h"
 
 #define SERVER "Server: HttpEpoll\r\n"
