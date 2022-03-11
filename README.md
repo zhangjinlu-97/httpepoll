@@ -1,11 +1,11 @@
-## 一个轻量级HTTP服务器
+## 一个Linux轻量级HTTP服务器
 
 ![](https://img.shields.io/github/license/zhangjinlu-97/httpepoll)
 ![](https://img.shields.io/badge/language-C-blue)
 
 ## 简介
 
-一个轻量级的HTTP服务器，支持GET、POST方法，提供静态资源处理和CGI支持。
+使用C语言实现的Linux下的轻量级HTTP服务器，支持GET、POST方法，提供静态资源处理和CGI支持。
 
 
 ## 开发部署环境
