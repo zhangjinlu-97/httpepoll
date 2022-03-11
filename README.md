@@ -1,70 +1,51 @@
-## 基于Linux Epoll的HTTP服务器
-# A C++ Lightweight Web Server
+## 一个C语言轻量级HTTP服务器
 
 
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/MarvinLe/WebServer.svg?branch=master)](https://travis-ci.org/MarvinLe/WebServer)
 
 
 ## 简介
 
-这是一个轻量级的Web服务器，目前支持GET、HEAD方法处理静态资源。并发模型选择: 单进程＋Reactor+非阻塞方式运行。
-
-测试页面: [http://marvinle.cn:8080/](http://marvinle.cn:8080/)
-
+一个轻量级的HTTP服务器，支持GET、POST方法，提供静态资源处理和CGI支持。
+3. 关键技术点：
+·    使用epoll + 非阻塞IO + 边缘触发(ET) 实现高效处理请求；
+·    实现线程池、阻塞等待队列提高并发度，并降低频繁创建线程的开销；
+·    使用pipe、dup2将标准输入输出重定向到管道，利用execl在子进程执行脚本，从而实现CGI；
+·     实现基于用户空间缓冲区的read与peek（窥看消息而不读取）方法，从而实现高效的readline方法；
+4. 项目收获：掌握Web服务器的基本构成与开发思路，对Unix网络编程、多线程编程相关API以及HTTP协议等有了更清晰的认识。
 
 
 ## 开发部署环境
 
-+ 操作系统: Ubuntu 16.04
++ 操作系统: Ubuntu 20.04
 
-+ 编译器: g++ 5.4
++ 编译器: gcc 9.4.0
 
 + 版本控制: git
 
-+ 自动化构建: cmake
++ 自动化构建: make
 
 + 集成开发工具: CLion
-
-+ 编辑器: Vim
-
-+ 压测工具：[WebBench](https://github.com/EZLippi/WebBench)
 
 
 
 ## Usage
 
 ```
-cmake . && make 
+make 
 
-./webserver [-p port] [-t thread_numbers]  [-r website_root_path] [-d daemon_run]
+./httpepoll [port] [thread number]
 
 ```
 
 ## 核心功能及技术
 
-+ 状态机解析HTTP请求，目前支持 HTTP GET、HEAD方法
++ 解析HTTP请求，目前支持 HTTP GET、POST方法，支持CGI脚本
 
-+ 添加定时器支持HTTP长连接，定时回调handler处理超时连接
++ 使用epoll + 非阻塞IO + 边缘触发(ET) 实现高效的请求处理
 
-+ 使用 priority queue 实现的最小堆结构管理定时器，使用标记删除，以支持惰性删除，提高性能
++ 实现线程池、阻塞等待队列提高并发度，并降低频繁创建线程的开销
 
-+ 使用epoll + 非阻塞IO + 边缘触发(ET) 实现高并发处理请求，使用Reactor编程模型
++ 使用pipe、dup2将标准输入输出重定向到管道，利用execl在子进程执行脚本，从而实现CGI
 
-+ epoll使用EPOLLONESHOT保证一个socket连接在任意时刻都只被一个线程处理
-
-+ 使用线程池提高并发度，并降低频繁创建线程的开销
-+ 同步互斥的介绍
-
-+ 使用RAII手法封装互斥器(pthrea_mutex_t)、 条件变量(pthread_cond_t)等线程同步互斥机制，使用RAII管理文件描述符等资源
-
-+ 使用shared_ptr、weak_ptr管理指针，防止内存泄漏
-
-  
-
-## 开发计划
-+ 添加异步日志系统，记录服务器运行状态
-+ 增加json配置文件，支持类似nginx的多网站配置
-+ 提供CGI支持
-+ 类似nginx的反向代理和负载均衡
-+ 必要时增加可复用内存池
++ 实现基于用户空间缓冲区的read与peek（窥看消息而不读取）方法，从而实现高效的readline方法
