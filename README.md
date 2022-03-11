@@ -1,8 +1,6 @@
 ## 一个C语言轻量级HTTP服务器
 
 
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://opensource.org/licenses/MIT)
-
 
 ## 简介
 
