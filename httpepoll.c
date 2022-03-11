@@ -45,44 +45,6 @@ void serve_file(int, const char *);
 
 void unimplemented(int);
 
-
-static ssize_t read_cnt;
-static char *read_ptr;
-static char read_buf[8192];
-
-// 带用户空间buffer的read方法，每次读一字节
-static ssize_t buff_read(int fd, char *ptr) {
-    if (read_cnt <= 0) {
-        while ((read_cnt = read(fd, read_buf, sizeof(read_buf))) < 0) {
-            if (errno != EINTR)
-                return -1;
-        }
-        if (read_cnt == 0)
-            return 0;
-        read_ptr = read_buf;
-    }
-
-    read_cnt--;
-    *ptr = *read_ptr++;
-    return 1;
-}
-
-// 查看套接字中下一个字符，但不读取
-static ssize_t peek_msg(int fd, char *ptr) {
-    if (read_cnt <= 0) {
-        while ((read_cnt = recv(fd, read_buf, sizeof(read_buf), 0)) < 0) {
-            if (errno != EINTR)
-                return -1;
-        }
-        if (read_cnt == 0)
-            return 0;
-        read_ptr = read_buf;
-    }
-
-    *ptr = *read_ptr;
-    return 1;
-}
-
 void accept_conn(int listenfd, int epfd) {
     struct sockaddr_in cliaddr;
     ssize_t clilen = sizeof(cliaddr);
@@ -315,18 +277,18 @@ void exec_cgi(int connfd, const char *path,
     close(cgi_output[1]);
     close(cgi_input[0]);
     if (strcasecmp(method, "POST") == 0) {
-        while (peek_msg(connfd, &c) > 0 && (c == '\n' || c == '\r')) {
-            buff_read(connfd, &c);
+        while (recv(connfd, &c, 1, MSG_PEEK) > 0 && (c == '\n' || c == '\r')) {
+            recv(connfd, &c, 1, 0);
         }
         // 读请求体内容，并写入CGI输入管道
         for (i = 0; i < content_length; i++) {
-            buff_read(connfd, &c);
+            recv(connfd, &c, 1, 0);
             write(cgi_input[1], &c, 1);
         }
     }
     // 读CGI输出管道并发送给客户端
     send_header(connfd);
-    while (buff_read(cgi_output[0], &c) > 0)
+    while (recv(cgi_output[0], &c, 1, 0) > 0)
         send(connfd, &c, 1, 0);
     close(cgi_output[0]);
     close(cgi_input[1]);
@@ -387,12 +349,12 @@ ssize_t readline(int sock, char *buf, int size) {
     int n;
 
     while ((i < size - 1) && (c != '\n')) {
-        n = buff_read(sock, &c);
+        n = recv(sock, &c, 1, 0);
         if (n > 0) {
             if (c == '\r') {
-                n = (int) peek_msg(sock, &c);
+                n = recv(sock, &c, 1, MSG_PEEK);
                 if ((n > 0) && (c == '\n')) {
-                    buff_read(sock, &c);
+                    n = recv(sock, &c, 1, 0);
                 } else
                     c = '\n';
             }
@@ -521,8 +483,6 @@ int main(int argc, char **argv) {
                 accept_conn(listenfd, epfd);
             } else {
                 AddTask(tp, recv_from, evlist[i].data.fd);
-//                pthread_create(&tid, NULL, &recv_from, (void *) evlist[i].data.fd);
-//                recv_from(evlist[i].data.fd);
             }
         }
     }
