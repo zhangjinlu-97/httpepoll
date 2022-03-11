@@ -5,8 +5,7 @@
 static ThreadPool *thread_pool;
 
 static void *thread_main(void *argv) {
-    printf("thread %d is running\n", (int) argv);
-
+//    printf("thread %d is running\n", (int) argv);
     for (;;) {
         Item item = Take(thread_pool->wait_queue);
         item.fn(item.args);

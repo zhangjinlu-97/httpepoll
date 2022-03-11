@@ -99,10 +99,10 @@ void accept_conn(int listenfd, int epfd) {
     fcntl(connfd, F_SETFL, flag);
 
     // 打印客户端信息
-    char ip[64] = {0};
-    printf("New Client IP: %s, Port: %d, cfd = %d\n",
-           inet_ntop(AF_INET, &cliaddr.sin_addr.s_addr, ip, sizeof(ip)),
-           ntohs(cliaddr.sin_port), connfd);
+//    char ip[64] = {0};
+//    printf("New Client IP: %s, Port: %d, cfd = %d\n",
+//           inet_ntop(AF_INET, &cliaddr.sin_addr.s_addr, ip, sizeof(ip)),
+//           ntohs(cliaddr.sin_port), connfd);
 
     // 设置为边缘触发
     struct epoll_event ev;
@@ -198,7 +198,7 @@ int init_listenfd(u_short *port, int epfd) {
 
     httpd = socket(PF_INET, SOCK_STREAM, 0);
     if (httpd == -1)
-        err_quit("socket failed");
+        err_quit("socket");
 
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
@@ -211,17 +211,17 @@ int init_listenfd(u_short *port, int epfd) {
 
 
     if (bind(httpd, (struct sockaddr *) &srvaddr, sizeof(srvaddr)) < 0)
-        err_quit("bind error");
+        err_quit("bind");
 
     if (*port == 0) {
         socklen_t namelen = sizeof(srvaddr);
         if (getsockname(httpd, (struct sockaddr *) &srvaddr, &namelen) == -1)
-            err_quit("getsockname error");
+            err_quit("getsockname");
         *port = ntohs(srvaddr.sin_port);
     }
 
     if (listen(httpd, 1024) < 0)
-        err_quit("listen error");
+        err_quit("listen");
 
     struct epoll_event ev;
     ev.events = EPOLLIN;
@@ -229,7 +229,7 @@ int init_listenfd(u_short *port, int epfd) {
 
     // 将listenfd加入到epoll兴趣列表
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, httpd, &ev) < 0) {
-        err_quit("epoll_ctl add fd error");
+        err_quit("epoll_ctl");
     }
 
     return (httpd);
