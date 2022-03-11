@@ -527,6 +527,7 @@ int main(int argc, char **argv) {
         }
     }
 
+    Exit(tp);
     close(listenfd);
 
     return (0);
