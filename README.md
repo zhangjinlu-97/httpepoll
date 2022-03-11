@@ -1,6 +1,7 @@
-## 一个C语言轻量级HTTP服务器
+## 一个轻量级HTTP服务器
 
-
+![](https://img.shields.io/github/license/zhangjinlu-97/httpepoll)
+![](https://img.shields.io/badge/language-C-blue)
 
 ## 简介
 
