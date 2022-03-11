@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
+#include "threadpool.h"
 
 #define SERVER "Server: HttpEpoll\r\n"
 
@@ -20,7 +21,7 @@
 
 void accept_conn(int, int);
 
-void recv_from(int);
+void *recv_from(void *);
 
 int init_listenfd(u_short *, int);
 
@@ -112,7 +113,8 @@ void accept_conn(int listenfd, int epfd) {
         perror("epoll_ctl add fd error");
 }
 
-void recv_from(int connfd) {
+void *recv_from(void *arg) {
+    int connfd = (int) arg;
     char buf[1024];
     int numchars;
     char method[255];
@@ -136,7 +138,7 @@ void recv_from(int connfd) {
     if (strcasecmp(method, "GET") && strcasecmp(method, "POST")) {
         unimplemented(connfd);
         close(connfd);
-        return;
+        return NULL;
     }
 
     // 若为POST则开启CGI
@@ -186,6 +188,7 @@ void recv_from(int connfd) {
 
     }
     close(connfd);  // 关闭连接，该连接自动从epoll兴趣列表移除
+    return NULL;
 }
 
 // 启动监听套接字，并添加到epoll兴趣列表
@@ -483,15 +486,21 @@ void unimplemented(int connfd) {
 }
 
 int main(int argc, char **argv) {
-    int listenfd, epfd, nready;
+    int listenfd, epfd, nready, nthreads;
     u_short port = 0;
+    ThreadPool *tp;
     struct epoll_event evlist[MAX_EVENTS];
 
-    epfd = epoll_create(MAX_EVENTS);
-
-    if (argc == 2) {
-        port = (u_short) atoi(argv[1]);
+    if (argc < 3) {
+        err_quit("usage: httpepoll <Port> <NThreads>");
     }
+    port = (u_short) atoi(argv[1]);
+    nthreads = atoi(argv[2]);
+    // 创建epoll实例
+    epfd = epoll_create(MAX_EVENTS);
+    // 创建线程池
+    tp = CreateThreadPool(nthreads);
+    Run(tp);
 
     listenfd = init_listenfd(&port, epfd);
 
@@ -511,7 +520,9 @@ int main(int argc, char **argv) {
             if (evlist[i].data.fd == listenfd) {
                 accept_conn(listenfd, epfd);
             } else {
-                recv_from(evlist[i].data.fd);
+                AddTask(tp, recv_from, evlist[i].data.fd);
+//                pthread_create(&tid, NULL, &recv_from, (void *) evlist[i].data.fd);
+//                recv_from(evlist[i].data.fd);
             }
         }
     }
