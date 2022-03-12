@@ -286,7 +286,7 @@ void exec_cgi(int connfd, const char *path,
     }
     // 读CGI输出管道并发送给客户端
     send_header(connfd);
-    while (recv(cgi_output[0], &c, 1, 0) > 0)
+    while (read(cgi_output[0], &c, 1) > 0)
         send(connfd, &c, 1, 0);
     close(cgi_output[0]);
     close(cgi_input[1]);
