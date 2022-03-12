@@ -19,7 +19,7 @@
 
 void accept_conn(int, int);
 
-void *recv_from(void *);
+void *read_req(void *);
 
 int init_listenfd(u_short *, int);
 
@@ -73,7 +73,7 @@ void accept_conn(int listenfd, int epfd) {
         perror("epoll_ctl add fd error");
 }
 
-void *recv_from(void *arg) {
+void *read_req(void *arg) {
     int connfd = (int) arg;
     char buf[1024];
     int numchars;
@@ -480,7 +480,7 @@ int main(int argc, char **argv) {
             if (evlist[i].data.fd == listenfd) {
                 accept_conn(listenfd, epfd);
             } else {
-                AddTask(tp, recv_from, evlist[i].data.fd);
+                AddTask(tp, read_req, evlist[i].data.fd);
             }
         }
     }
